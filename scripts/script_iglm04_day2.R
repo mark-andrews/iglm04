@@ -161,3 +161,76 @@ estimates[1] + estimates[2] * seq(5)
 # predicted mean of the negbin for values of 
 # prestige from 1 to 5
 exp(estimates[1] + estimates[2] * seq(5))
+
+#  draw samples from a negative binomial
+rnegbin(1000, mu = 1.4, theta = 1.73) %>% var()
+
+summary(M15)
+
+# the factor by which the mean increases for every unit change of the predictor
+exp(estimates[2])
+
+
+M16 <- glm.nb(publications ~ prestige + mentor,
+              data = biochem_df)
+summary(M16)
+anova(M15, M16)
+
+
+
+# Zero inflated count models ----------------------------------------------
+
+library(pscl)
+
+smoking_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/iglm04/main/data/smoking.csv")
+
+barplot(table(smoking_df$cigs))
+
+M17 <- glm(cigs ~ educ, 
+           data = smoking_df,
+           family = poisson(link = 'log')
+)
+
+summary(M17)$coefficients
+
+smoking_df_2 <- tibble(educ = seq(6, 18))
+
+add_predictions(smoking_df_2, M17)
+add_predictions(smoking_df_2, M17, type = 'response')
+
+M18 <- zeroinfl(cigs ~ educ, data = smoking_df)
+summary(M18)
+
+estimates <- coef(M18)
+
+# what is the log odds that the latent variable 
+# takes the value of 1, if educ = 10?
+estimates[3] + estimates[4] * 10
+
+# what is the probability that the latent variable 
+# takes the value of 1, if educ = 10?
+# what is the probability that a person with educ = 10 is a non-smoker?
+ilogit(estimates[3] + estimates[4] * 10)
+
+# what is the probability that a person with educ = 5, 10, 15, or 20 is a non-smoker?
+ilogit(estimates[3] + estimates[4] * c(5, 10, 15, 20))
+
+# what is the log of the mean number of cigs smoked
+# for a person with educ = 10?
+estimates[1] + estimates[2] * 10
+
+# what is the mean number of cigs smoked
+# for a person with educ = 10?
+exp(estimates[1] + estimates[2] * 10)
+
+# what is the mean number of cigs smoked
+# for a person with educ = 5, 10, 15, or 20?
+exp(estimates[1] + estimates[2] * c(5, 10, 15, 20))
+
+add_predictions(smoking_df_2, M18, type = 'response')
+
+add_predictions(smoking_df_2, M18, type = 'zero')
+
+add_predictions(smoking_df_2, M18, type = 'count')
+
+vuong(M17, M18)
